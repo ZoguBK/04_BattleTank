@@ -18,13 +18,13 @@ public:
 	void Elevate(float RelativeSpeed);
 
 private:
-	UPROPERTY(EditAnywhere, Category=Setup)
+	UPROPERTY(EditDefaultsOnly, Category=Setup)
 	float MaxDeggresPerSeconds = 20;
 
-	UPROPERTY(EditAnywhere, Category = Setup)
+	UPROPERTY(EditDefaultsOnly, Category = Setup)
 	float MaxElevationDeggres = 40;
 
-	UPROPERTY(EditAnywhere, Category = Setup)
+	UPROPERTY(EditDefaultsOnly, Category = Setup)
 	float MinElevationDeggres = 0;
 
 };
