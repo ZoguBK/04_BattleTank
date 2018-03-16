@@ -6,6 +6,14 @@
 #include "Components/ActorComponent.h"
 #include "TankAimingComponent.generated.h"
 
+UENUM()
+enum class EFiringState : uint8
+{
+	Reloaded,	
+	Aiming,
+	Locked
+};
+
 // Forward declarations
 class UTankBarrel;
 class UTankTurret;
@@ -16,16 +24,23 @@ class BATTLETANK_API UTankAimingComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:	
-	// Sets default values for this component's properties
+	
 	UTankAimingComponent();
+
+	UFUNCTION(BlueprintCallable, Category = Stup)
+	void Initialise(UTankBarrel* BarrelToSet, UTankTurret* TurretToSet);
+
+	void AimAt(FVector HitLocation, float LaunchSpeed);
+
+protected:
+
+	UPROPERTY(BlueprintReadOnly, Category = State)
+	EFiringState FiringState = EFiringState::Reloaded;
 
 private:
 	UTankBarrel* Barrel = nullptr;
 	UTankTurret* Turret = nullptr;
-public:	
-	// Called every frame
-	void AimAt(FVector HitLocation, float LaunchSpeed);
-	void SetBarrelReference(UTankBarrel* BarrelToSet);
-	void SetTurretReference(UTankTurret* TurretToSet);
+	
 	void MoveBarrelTowards(FVector AimDirection);
+
 };
