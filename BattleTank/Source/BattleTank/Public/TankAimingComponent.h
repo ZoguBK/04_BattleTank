@@ -42,8 +42,16 @@ protected:
 	EFiringState FiringState = EFiringState::Reloaded;
 
 private:
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction);
+
+	virtual void BeginPlay() override;
+
+	bool IsBarrelMoving();
+	
 	UTankBarrel* Barrel = nullptr;
 	UTankTurret* Turret = nullptr;
+
+	FVector AimDirection = FVector(0,0,0);
 	
 	UPROPERTY(EditDefaultsOnly, Category = Firing)
 	float LaunchSpeed = 4000.0;

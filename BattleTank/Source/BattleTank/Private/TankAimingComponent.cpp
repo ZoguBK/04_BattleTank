@@ -19,6 +19,26 @@ UTankAimingComponent::UTankAimingComponent()
 	// ...
 }
 
+void UTankAimingComponent::BeginPlay() {
+	// So that first fire is after initial reload
+	LastFireTime = FPlatformTime::Seconds();
+}
+
+
+void UTankAimingComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction){
+	if ((FPlatformTime::Seconds() - LastFireTime) < ReloadTimeInSeconds) {
+		FiringState = EFiringState::Reloaded;
+	}else if (IsBarrelMoving())	{
+		FiringState = EFiringState::Aiming;
+	} else {
+		FiringState = EFiringState::Locked;
+	}	
+}
+
+bool UTankAimingComponent::IsBarrelMoving() {
+	if (!ensure(Barrel)) { return false; }	
+	return !Barrel->GetForwardVector().Equals(AimDirection, 0.01);
+}
 
 void UTankAimingComponent::Initialise(UTankBarrel* BarrelToSet, UTankTurret* TurretToSet) {
 	Barrel = BarrelToSet;
@@ -32,7 +52,7 @@ void UTankAimingComponent::AimAt(FVector HitLocation) {
 	FVector StartLocation = Barrel->GetSocketLocation(FName("Projectile"));
 
 	if (UGameplayStatics::SuggestProjectileVelocity(this, OutLaunchVelocity, StartLocation, HitLocation, LaunchSpeed, false, 0, 0, ESuggestProjVelocityTraceOption::DoNotTrace)) {
-		auto AimDirection = OutLaunchVelocity.GetSafeNormal();
+		AimDirection = OutLaunchVelocity.GetSafeNormal();
 		MoveBarrelTowards(AimDirection);
 		//UE_LOG(LogTemp, Warning, TEXT("%s is aiming at: %s"),*TankName, *AimDirection.ToString());
 	}	
@@ -44,15 +64,16 @@ void UTankAimingComponent::MoveBarrelTowards(FVector AimDirection) {
 	auto AimAsRotator = AimDirection.Rotation();
 	auto DeltaRotator = AimAsRotator - BarrelRotator;
 	Barrel->Elevate(DeltaRotator.Pitch);
-	Turret->Rotate(DeltaRotator.Yaw);
+	if (DeltaRotator.Yaw<180) {
+		Turret->Rotate(DeltaRotator.Yaw);
+	}else{ Turret->Rotate(-DeltaRotator.Yaw); }
+	
 }
 
-void UTankAimingComponent::Fire() {
-	if (!ensure(Barrel && ProjectileBluepring)) { return; }
-
-	bool IsReloaded = (FPlatformTime::Seconds() - LastFireTime) > ReloadTimeInSeconds;
-	if (IsReloaded) {
-
+void UTankAimingComponent::Fire() {	
+	if (FiringState != EFiringState::Reloaded) {
+		if (!ensure(Barrel)) { return; }
+		if (!ensure(ProjectileBluepring)) { return; }
 		auto Projectile = GetWorld()->SpawnActor<AProjectile>(
 			ProjectileBluepring,
 			Barrel->GetSocketLocation(FName("Projectile")),
