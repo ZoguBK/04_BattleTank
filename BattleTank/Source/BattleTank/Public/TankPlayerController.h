@@ -7,7 +7,6 @@
 #include "TankPlayerController.generated.h"
 
 // Forward declarations
-class ATank;
 class UTankAimingComponent;
 
 /**
@@ -19,22 +18,16 @@ class BATTLETANK_API ATankPlayerController : public APlayerController
 	GENERATED_BODY()
 
 protected:
-	UFUNCTION(BlueprintCallable, Category = Setup)
-	ATank* GetControlledTank() const;
-
 	UFUNCTION(BlueprintImplementableEvent, Category = Setup)
 	void FoundAimingComponent(UTankAimingComponent* AimingComponentRef);
 
 private:
-
 	UPROPERTY(EditDefaultsOnly)
 	float CrossHairXLoacation = 0.5;
 	UPROPERTY(EditDefaultsOnly)
 	float CrossHairYLoacation = 0.33333;
 	UPROPERTY(EditDefaultsOnly)
 	float LineTraceRange = 1000000;
-
-
 
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
