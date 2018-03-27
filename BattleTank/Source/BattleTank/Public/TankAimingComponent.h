@@ -68,10 +68,11 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = Firing)
 	float ReloadTimeInSeconds = 3;
 
-	double LastFireTime = 0;
-
+	UPROPERTY(EditDefaultsOnly, Category = Firing)
 	int32 AmmoCount = 3;
 
+	double LastFireTime = 0;
+	
 	void MoveBarrelTowards(FVector AimDirection);
 	
 };
