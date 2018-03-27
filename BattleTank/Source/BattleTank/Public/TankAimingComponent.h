@@ -9,9 +9,10 @@
 UENUM()
 enum class EFiringState : uint8
 {
-	Reloaded,	
+	Reloading,	
 	Aiming,
-	Locked
+	Locked,
+	OutOfAmmo
 };
 
 // Forward declarations
@@ -33,14 +34,19 @@ public:
 
 	void AimAt(FVector HitLocation);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = Firing)
 	void Fire();
+
+	EFiringState GetFiringState() const;
+
+	UFUNCTION(BlueprintCallable, Category = Firing)
+	int32 GetAmmoCount() const;
 
 protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = State)
-	EFiringState FiringState = EFiringState::Reloaded;
-
+	EFiringState FiringState = EFiringState::Reloading;
+	
 private:
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction);
 
@@ -63,6 +69,8 @@ private:
 	float ReloadTimeInSeconds = 3;
 
 	double LastFireTime = 0;
+
+	int32 AmmoCount = 3;
 
 	void MoveBarrelTowards(FVector AimDirection);
 	

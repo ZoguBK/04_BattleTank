@@ -26,18 +26,16 @@ void UTankAimingComponent::BeginPlay() {
 
 
 void UTankAimingComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction){
-	if ((FPlatformTime::Seconds() - LastFireTime) < ReloadTimeInSeconds) {
-		FiringState = EFiringState::Reloaded;
+	if (AmmoCount <= 0) {
+		FiringState = EFiringState::OutOfAmmo;
+	}
+	else if ((FPlatformTime::Seconds() - LastFireTime) < ReloadTimeInSeconds) {
+		FiringState = EFiringState::Reloading;
 	}else if (IsBarrelMoving())	{
 		FiringState = EFiringState::Aiming;
-	} else {
+	}else {
 		FiringState = EFiringState::Locked;
 	}	
-}
-
-bool UTankAimingComponent::IsBarrelMoving() {
-	if (!ensure(Barrel)) { return false; }	
-	return !Barrel->GetForwardVector().Equals(AimDirection, 0.01);
 }
 
 void UTankAimingComponent::Initialise(UTankBarrel* BarrelToSet, UTankTurret* TurretToSet) {
@@ -58,20 +56,33 @@ void UTankAimingComponent::AimAt(FVector HitLocation) {
 	}	
 }
 
+bool UTankAimingComponent::IsBarrelMoving() {
+	if (!ensure(Barrel)) { return false; }
+	return !Barrel->GetForwardVector().Equals(AimDirection, 0.01);
+}
+
 void UTankAimingComponent::MoveBarrelTowards(FVector AimDirection) {
 	if (!ensure(Barrel && Turret)) { return; }
 	auto BarrelRotator = Barrel->GetForwardVector().Rotation();
 	auto AimAsRotator = AimDirection.Rotation();
 	auto DeltaRotator = AimAsRotator - BarrelRotator;
 	Barrel->Elevate(DeltaRotator.Pitch);
-	if (DeltaRotator.Yaw<180) {
+	if (FMath::Abs(DeltaRotator.Yaw)<180) {
 		Turret->Rotate(DeltaRotator.Yaw);
 	}else{ Turret->Rotate(-DeltaRotator.Yaw); }
 	
 }
 
+EFiringState UTankAimingComponent::GetFiringState() const {
+	return FiringState;
+}
+
+int32 UTankAimingComponent::GetAmmoCount() const {
+	return AmmoCount;
+}
+
 void UTankAimingComponent::Fire() {	
-	if (FiringState != EFiringState::Reloaded) {
+	if (FiringState == EFiringState::Locked || FiringState == EFiringState::Aiming) {
 		if (!ensure(Barrel)) { return; }
 		if (!ensure(ProjectileBluepring)) { return; }
 		auto Projectile = GetWorld()->SpawnActor<AProjectile>(
@@ -79,7 +90,9 @@ void UTankAimingComponent::Fire() {
 			Barrel->GetSocketLocation(FName("Projectile")),
 			Barrel->GetSocketRotation(FName("Projectile"))
 			);
-		Projectile->LaunchProjectile(LaunchSpeed);
+		Projectile->LaunchProjectile(LaunchSpeed);		
 		LastFireTime = FPlatformTime::Seconds();
+		AmmoCount--;
 	}
 }
+
